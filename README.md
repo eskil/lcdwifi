@@ -1,7 +1,7 @@
 lcdwifi
 =======
 
-![Screenshot](lcdwifi/lcdwifi.jpg)
+![Screenshot](https://raw.github.com/eskil/lcdwifi/master/lcdwifi.jpg)
 
 Old piece of code for display wifi signal on a VFD 2x16 display.
 
