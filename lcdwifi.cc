@@ -62,83 +62,83 @@ struct poptOption g_cli_options[] = {
 
 class LCD {
 private:
-	int m_fd;
+     int m_fd;
 
-	int connect_to_lcd_proc (const char *host, int port) {
-		struct sockaddr_in sa;
-		struct hostent *hp;
-		
-		int fd = socket (AF_INET, SOCK_STREAM, 0);
-		if (fd < 0) {
-			perror ("socket");
-			exit (1);
-		}
-		
-		if (!(hp = gethostbyname(host))) {
-			fprintf (stderr, "Cannot lookup %s\n", host);
-			exit (1);
-		}
-		
-		memset(&sa, 0, sizeof(struct sockaddr_in));
-		sa.sin_port = htons(port);
-		memcpy(&sa.sin_addr, hp->h_addr, hp->h_length);
-		sa.sin_family = hp->h_addrtype;
-		
-		if (connect(fd, (struct sockaddr *)&sa, sizeof(struct sockaddr_in)) < 0) {
+     int connect_to_lcd_proc (const char *host, int port) {
+          struct sockaddr_in sa;
+          struct hostent *hp;
+          
+          int fd = socket (AF_INET, SOCK_STREAM, 0);
+          if (fd < 0) {
+               perror ("socket");
+               exit (1);
+          }
+          
+          if (!(hp = gethostbyname(host))) {
+               fprintf (stderr, "Cannot lookup %s\n", host);
+               exit (1);
+          }
+          
+          memset(&sa, 0, sizeof(struct sockaddr_in));
+          sa.sin_port = htons(port);
+          memcpy(&sa.sin_addr, hp->h_addr, hp->h_length);
+          sa.sin_family = hp->h_addrtype;
+          
+          if (connect(fd, (struct sockaddr *)&sa, sizeof(struct sockaddr_in)) < 0) {
             fprintf (stderr, "connect to LCDd (%s:%d): %s\n", host, port, strerror (errno));
             exit (1);
-		}
-		
-		return fd;
-		
-	}
+          }
+          
+          return fd;
+          
+     }
 public:
     char *m_lcdproc_version;
     char *m_lcdproc_protocol;
     int m_width, m_heigth, m_cell_width, m_cell_heigth;
   
-	int send_message (char *format, ...) {
-		char message[1024];
-		va_list ap;
-		
-		va_start (ap, format);
-		int mesg_sz = vsnprintf (message, sizeof (message)-1, format, ap);
-		if (mesg_sz >= sizeof (message)-1) {
-			fprintf (stderr, "need more than 1k message size...\n");
-			exit (1);
-		}
-		
-		int sent_sz;
-		if ((sent_sz = write (m_fd, message, mesg_sz)) != mesg_sz) {
-			perror ("write");
-		}
+     int send_message (char *format, ...) {
+          char message[1024];
+          va_list ap;
+          
+          va_start (ap, format);
+          int mesg_sz = vsnprintf (message, sizeof (message)-1, format, ap);
+          if (mesg_sz >= sizeof (message)-1) {
+               fprintf (stderr, "need more than 1k message size...\n");
+               exit (1);
+          }
+          
+          int sent_sz;
+          if ((sent_sz = write (m_fd, message, mesg_sz)) != mesg_sz) {
+               perror ("write");
+          }
 
         if (g_verbose > 5) printf ("LCDd snd : %s\n", message);
 
-		write (m_fd, "\n", 1);
-		va_end (ap);
+          write (m_fd, "\n", 1);
+          va_end (ap);
 
         if (strcmp (message, "hello") == 0) {
             return read_response (true);
         }
 
-		return read_response (false);
-	}
+          return read_response (false);
+     }
 
-	bool read_response (bool hello_response) {
-		char message[1024];
-		int read_sz = read (m_fd, message, 1024);
-		char *end = strchr (message, '\n');
-		*end = 0;
+     bool read_response (bool hello_response) {
+          char message[1024];
+          int read_sz = read (m_fd, message, 1024);
+          char *end = strchr (message, '\n');
+          *end = 0;
 
-		if (g_verbose > 5) printf ("LCDd rcv : %s\n", message);
+          if (g_verbose > 5) printf ("LCDd rcv : %s\n", message);
 
         if (hello_response) {
             return parse_hello (message);
         }
 
-		return strcmp (message, "success") == 0;
-	}
+          return strcmp (message, "success") == 0;
+     }
 
     bool matchToken (const char *msg, const char *token, const char **endptr) {
         while (msg && *msg && isspace (*msg)) msg++;
@@ -203,16 +203,16 @@ public:
         }
     }
 
-	LCD (const char *host, int port) {
+     LCD (const char *host, int port) {
         m_lcdproc_version = NULL;
         m_lcdproc_protocol = NULL;
-		m_fd = connect_to_lcd_proc (host, port);
+          m_fd = connect_to_lcd_proc (host, port);
         if (g_verbose) {
             printf ("connecting to %s:%d, monitoring %s\n", host, port, g_device);
         }
-		send_message ("hello");
-		send_message ("screen_add wifi");
-	}
+          send_message ("hello");
+          send_message ("screen_add wifi");
+     }
 
     ~LCD () {
         if (m_lcdproc_version) {
@@ -227,18 +227,18 @@ public:
 
 class LCDWidget {
 protected:
-	LCD *m_lcd;
+     LCD *m_lcd;
 public:
-	LCDWidget (LCD *lcd) : m_lcd (lcd) {
-	}
+     LCDWidget (LCD *lcd) : m_lcd (lcd) {
+     }
 
-	virtual ~LCDWidget () {};
+     virtual ~LCDWidget () {};
 };
 
 
 typedef struct {
-	char name[20];
-	int val;
+     char name[20];
+     int val;
 } GraphElem;
 
 
@@ -247,87 +247,87 @@ class SignalGraphWidget : public LCDWidget {
 protected:
     GraphElem *m_graph;  
 public:
-	SignalGraphWidget (LCD *lcd) : LCDWidget (lcd) {
+     SignalGraphWidget (LCD *lcd) : LCDWidget (lcd) {
         m_width = m_lcd->m_width - 4;
         m_graph = new GraphElem[m_width];
-		for (int x = 0; x < m_width; x++) {
-			snprintf (m_graph[x].name, sizeof (m_graph[x].name)-1, "wg%d", x);
-			m_graph[x].val = 0;
-			m_lcd->send_message ("widget_add wifi %s vbar", m_graph[x].name);
-			m_lcd->send_message ("widget_set wifi %s %d 2 0", m_graph[x].name, x);
-		}
-	}
-		
-	virtual ~SignalGraphWidget () {
+        for (int x = 0; x < m_width; x++) {
+            snprintf (m_graph[x].name, sizeof (m_graph[x].name)-1, "wg%d", x);
+            m_graph[x].val = 0;
+            m_lcd->send_message ("widget_add wifi %s vbar", m_graph[x].name);
+            m_lcd->send_message ("widget_set wifi %s %d 2 0", m_graph[x].name, x);
+        }
+     }
+          
+     virtual ~SignalGraphWidget () {
         delete[] m_graph;
-	}
+     }
 
-	void add_reading (int strength) {
-		for (int x = 1; x < m_width; x++) {
-			m_graph[x-1].val = m_graph[x].val;
-		}
-		int calibrated_strength = (int)rint (((double)(m_lcd->m_cell_heigth-1) * strength)/100);
-		m_graph[m_width-1].val = calibrated_strength;
-	}
+     void add_reading (int strength) {
+          for (int x = 1; x < m_width; x++) {
+               m_graph[x-1].val = m_graph[x].val;
+          }
+          int calibrated_strength = (int)rint (((double)(m_lcd->m_cell_heigth-1) * strength)/100);
+          m_graph[m_width-1].val = calibrated_strength;
+     }
 
-	void update () {
+     void update () {
         for (int x = m_width-1; x >=0; x--) {
-			m_lcd->send_message ("widget_set wifi %s %d 2 %d", 
+               m_lcd->send_message ("widget_set wifi %s %d 2 %d", 
                                  m_graph[x].name, x, m_graph[x].val);
-		}
-	}
-		
+          }
+     }
+          
 };
 
 
 class SignalStrengthWidget : public LCDWidget {
 protected:
     int m_str_len;
-	char *m_str;
-	SignalGraphWidget m_graph;
-	int m_strength;
+    char *m_str;
+    SignalGraphWidget m_graph;
+    int m_strength;
     int m_tx_load;
     int m_rx_load;
 public:
-	SignalStrengthWidget (LCD *lcd) : LCDWidget (lcd), m_graph (lcd) {
+     SignalStrengthWidget (LCD *lcd) : LCDWidget (lcd), m_graph (lcd) {
         m_str_len = m_lcd->m_width - 2;
         m_str = new char[m_str_len];
 
-		m_lcd->send_message ("widget_add wifi mesg string");
-		m_lcd->send_message ("widget_add wifi tx vbar");
-		m_lcd->send_message ("widget_add wifi rx vbar");
-	};
+        m_lcd->send_message ("widget_add wifi mesg string");
+        m_lcd->send_message ("widget_add wifi tx vbar");
+        m_lcd->send_message ("widget_add wifi rx vbar");
+     };
 
-	~SignalStrengthWidget () {
+     ~SignalStrengthWidget () {
         delete[] m_str;
-	}
+     }
 
     void add_reading (int strength, int tx_load, int rx_load) {
-		m_strength = strength;
+        m_strength = strength;
         m_tx_load = tx_load;
         m_rx_load = rx_load;
-		m_graph.add_reading (m_strength);
-	}
+        m_graph.add_reading (m_strength);
+     }
 
-	void update () {
+     void update () {
         memset (m_str, ' ', m_str_len);
         m_str[m_str_len-1] = '\0';
 
-		if (m_strength > g_low_threshold) {
-			snprintf (m_str, m_str_len, "Signal %d%%", m_strength);
-			m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
+        if (m_strength > g_low_threshold) {
+            snprintf (m_str, m_str_len, "Signal %d%%", m_strength);
+            m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
         } else if (m_strength <= g_low_threshold && m_strength > 0) {
-			m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
-			snprintf (m_str, m_str_len, "Signal %d%%", m_strength);
-			m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
+            m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
+            snprintf (m_str, m_str_len, "Signal %d%%", m_strength);
+            m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
         } else if (m_strength == 0) {
             m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
             snprintf (m_str, m_str_len, "Lost signal", m_strength);
             m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
-		} else if (m_strength < 0) {
-			snprintf (m_str, m_str_len, "No device %s", g_device);
-			m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
-		}		
+        } else if (m_strength < 0) {
+            snprintf (m_str, m_str_len, "No device %s", g_device);
+            m_lcd->send_message ("widget_set wifi mesg 1 1 \"%s\"", m_str);
+        }          
 
         int calibrated_tx = (int)rint (((double)(m_lcd->m_cell_heigth-1) * m_tx_load)/100);
         int calibrated_rx = (int)rint (((double)(m_lcd->m_cell_heigth-1) * m_rx_load)/100);
@@ -340,8 +340,8 @@ public:
         m_lcd->send_message ("widget_set wifi rx 14 1 %d", calibrated_rx);
 
         m_graph.update ();
-	}
-		
+     }
+          
 };
 
 
@@ -357,7 +357,7 @@ class ProcNetReader {
 
     void update_wireless () {
         rewind (m_proc_net_wireless);
-
+        
         do {
             char line[256];
             char *ptr;
@@ -482,6 +482,7 @@ public:
         m_proc_net_dev =  fopen ("/proc/net/dev", "rt");
         assert (m_proc_net_dev);
     }
+
     ~ProcNetReader () {
         free (m_device);
     }
@@ -525,31 +526,31 @@ int getInterfaces (int skfd, char *ifname, char *args[], int count) {
 
 
 void usage (const char *cmd) {
-	printf ("usage: %s [host:port]\n", cmd);
+     printf ("usage: %s [host:port]\n", cmd);
 }
 
 
 int main (int argc, const char *argv[]) {
-	char *host = "localhost";
-	int port = 13666;
+    char *host = "localhost";
+    int port = 13666;
     int skfd;
-
-	poptContext opt_con = poptGetContext (NULL, argc, argv, g_cli_options, 0);
-	int opt_res = poptGetNextOpt (opt_con);
-	poptFreeContext (opt_con);
-
-	char *ptr;
-	host = strdup (g_lcdhost);
-	if ((ptr = strchr (host, ':')) != NULL) {
-		*ptr = '\0';
-		ptr++;
-		port = atol (ptr);
-	}
-
-
-	LCD lcd (host, port);
-	SignalStrengthWidget w (&lcd);
-
+    
+    poptContext opt_con = poptGetContext (NULL, argc, argv, g_cli_options, 0);
+    int opt_res = poptGetNextOpt (opt_con);
+    poptFreeContext (opt_con);
+    
+    char *ptr;
+    host = strdup (g_lcdhost);
+    if ((ptr = strchr (host, ':')) != NULL) {
+        *ptr = '\0';
+        ptr++;
+        port = atol (ptr);
+    }
+    
+    
+    LCD lcd (host, port);
+    SignalStrengthWidget w (&lcd);
+    
     skfd = iw_sockets_open ();
     iw_enum_devices (skfd, getInterfaces, NULL, 0);
     iw_sockets_close (skfd);
@@ -566,11 +567,11 @@ int main (int argc, const char *argv[]) {
     // FIXME: move to a method
     /* Here we begin to suck... */
 
-	do {      
+     do {      
         reader.update ();
         w.add_reading (reader.getSignalStrength (), reader.getTxLoad (), reader.getRxLoad ());
         w.update ();
 
         usleep (g_lcd_sleep_time);
-	} while (1);
+     } while (1);
 }
